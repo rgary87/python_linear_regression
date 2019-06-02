@@ -5,6 +5,15 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
+def plot_cost_over_time(iters: int, cost:[]):
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(iters), cost, 'r')
+    ax.set_xlabel('Iterations')
+    ax.set_ylabel('Cost')
+    ax.set_title('Error vs. Training Epoch')
+    plt.show()
+
+
 def normalize_value(x):
     row_sum = np.linalg.norm(x)
     norm_matrix = x / row_sum
@@ -19,31 +28,26 @@ def try_multivariable_linear_regression(Xs: [[]], y: []):
     arr = np.ones((len(Xs[0]), 1))
     for i in range(len(Xs)):
         arr = np.insert(arr, [i + 1], Xs[i], axis=1)
-    alpha = 0.1
-    iters = 1000
+    alpha = 13.3
+    iters = 100
     theta = np.zeros([1,len(arr[0])])
     print(f'First cost is: {compute_cost_function(arr, y, theta)}')
     theta, cost = gradient_descend(arr, y, theta, iters, alpha)
     print(f'Final cost is: {compute_cost_function(arr, y, theta)}')
-    fig, ax = plt.subplots()
-    ax.plot(np.arange(iters), cost, 'r')
-    ax.set_xlabel('Iterations')
-    ax.set_ylabel('Cost')
-    ax.set_title('Error vs. Training Epoch')
-    plt.show()
+    plot_cost_over_time(iters, cost)
+
 
 def gradient_descend(X: [[]], y: [], theta: [], iters: int, alpha: float):
     cost = np.zeros(iters)
-    for i in range(iters):
-        t1 = X * (X @ theta.T) - y
-        t2 = np.sum(t1, axis=0)
-        t3 = alpha/len(X)
-        t4 = t3 * t2
-        theta = theta - t4
-        # theta = theta - (alpha/len(X)) * np.sum(X * (X @ theta.T - y), axis=0)
-        cost[i] = compute_cost_function(X, y, theta)
-        if i > 0 and cost[i] > cost[i-1]:
+    i = 0
+    while i < iters:
+        tmp = theta - (alpha/len(X)) * np.sum(X * (X @ theta.T - y), axis=0)
+        cost[i] = compute_cost_function(X, y, tmp)
+        if i > 0 and cost[i] >= cost[i-1]:
             alpha /= 2
+        else:
+            theta = tmp
+        i += 1
     print(f'Alpha ends up: {alpha}')
     return theta, cost
 
