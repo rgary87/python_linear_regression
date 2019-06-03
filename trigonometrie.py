@@ -218,8 +218,8 @@ if __name__ == '__main__':
                 running = False
 
             elif event.type == pygame.KEYDOWN:
-                print(f'event.type={event.type}')
-                print(f'event.key={event.key}')
+                # print(f'event.type={event.type}')
+                # print(f'event.key={event.key}')
                 if event.key == pygame.K_q:
                     running = False
                 if event.key == pygame.K_UP:
@@ -230,22 +230,6 @@ if __name__ == '__main__':
                     car.turn_right()
 
                 draw_all(all_border_lines, [car])
-
-        # elif event.type == pygame.KEYUP:
-            #         line1 = rotate_2d(sp.array([[line1[0][0], line1[0][1]], [line1[1][0], line1[1][1]]]),
-            #                           sp.array([line1[0][0], line1[0][1]]))
-            #         line1 = [(int(line1[0][0]), int(line1[0][1])), (line1[1][0], line1[1][1])]
-            #         intersection = segment_intersect(line1, line2)
-            #         screen.fill(bgcolor)
-            #         pygame.draw.aaline(screen, fgcolor, line1[0], line1[1])
-            #         pygame.draw.aaline(screen, fgcolor, line2[0], line2[1])
-            #         if intersection is not None:
-            #             pygame.draw.circle(screen, fgcolor, intersection, 10, 2)
-            #         if (active_pt < 2):
-            #             pygame.draw.circle(screen, redcolor, line1[active_pt], 5, 1)
-            #         else:
-            #             pygame.draw.circle(screen, redcolor, line2[active_pt - 2], 5, 1)
-            #         pygame.display.flip()
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pos1 = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
