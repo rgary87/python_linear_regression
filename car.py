@@ -33,10 +33,12 @@ class Car:
     def order(self, direction):
         if direction == 1:
             self.turn_left()
+            self.move_forward()
         elif direction == 2:
             self.move_forward()
         else:
             self.turn_right()
+            self.move_forward()
 
     def move_forward(self):
         points = Car.rotate_2d(

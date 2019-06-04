@@ -1,4 +1,6 @@
 import pygame
+import track
+from algo_gen import AlgoGen
 from car import *
 
 
@@ -26,6 +28,8 @@ class Display:
         self.cars = [Car([179, 103], 0., track)] * 20
         self.draw_all(track, self.cars)
 
+        self.algo_gen = AlgoGen(self.cars, 20, 7, 3, 20, 10)
+
     def main_loop(self):
         running = True
 
@@ -33,6 +37,7 @@ class Display:
         pos1 = ()
         i = 30
         while running:
+            self.algo_gen.do_one_cycle()
             for event in pygame.event.get():
 
                 if event.type == pygame.QUIT:
@@ -49,7 +54,7 @@ class Display:
                         self.cars[0].turn_left()
                     if event.key == pygame.K_RIGHT:
                         self.cars[0].turn_right()
-                    self.draw_all(self.track, self.cars)
+                    # self.draw_all(self.track, self.cars)
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos1 = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -57,10 +62,11 @@ class Display:
                 elif event.type == pygame.MOUSEBUTTONUP:
                     pos2 = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
                     self.track.append([pos1, pos2])
-                    self.draw_all(self.track, self.cars)
+                    # self.draw_all(self.track, self.cars)
                     print(f'{pos}({pygame.mouse.get_pos()[0]}, {pygame.mouse.get_pos()[1]})]')
                     i += 1
 
+            self.draw_all(self.track, self.cars)
             # sleep
             self.clock.tick(self.delay)
 
@@ -68,9 +74,9 @@ class Display:
         self.screen.fill(self.bgcolor)
         for line in lines:
             pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
-        pygame.display.flip()
         for car in cars:
             self.draw_car(car.position, car.rotation)
+        pygame.display.flip()
 
     def draw_car(self, position_vector, rotation):
         car_length = 50
@@ -98,8 +104,11 @@ class Display:
 
         pygame.draw.lines(self.screen, self.fgcolor, True,
                           [corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right])
-        pygame.display.flip()
 
     def draw_line(self, line):
         pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
-        pygame.display.flip()
+
+
+if __name__ == '__main__':
+    display = Display(track.get_track())
+    display.main_loop()
