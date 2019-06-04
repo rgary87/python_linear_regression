@@ -34,6 +34,7 @@ class Car:
     def turn_left(self):
         self.rotation -= self.rotation_rate
 
+
 def slope(p1, p2):
     return (p2[1] - p1[1]) * 1. / (p2[0] - p1[0])
 
@@ -93,11 +94,6 @@ def draw_all(lines, cars: [Car]):
     for car in cars:
         draw_car(car.position, car.rotation)
 
-    # line1 = rotate_2d(sp.array([[line1[0][0], line1[0][1]], [line1[1][0], line1[1][1]]]),
-
-
-#                           sp.array([line1[0][0], line1[0][1]]))
-#         line1 = [(int(line1[0][0]), int(line1[0][1])), (line1[1][0], line1[1][1])]
 
 def draw_car(position_vector, rotation):
     car_length = 50
@@ -126,11 +122,6 @@ def draw_car(position_vector, rotation):
     pygame.draw.lines(screen, fgcolor, True,
                       [corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right])
     pygame.display.flip()
-
-    # pygame.draw.aaline(screen, fgcolor, True, lines[0][0], int(line[1]))
-
-    # for line in lines:
-    #     pygame.draw.aaline(screen, fgcolor, True, int(line[0]), int(line[1]))
 
 
 def draw_line(line):
