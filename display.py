@@ -23,7 +23,7 @@ class Display:
         self.clock = pygame.time.Clock()
         pygame.key.set_repeat(self.key_delay, self.key_interval)
         self.track = track
-        self.cars = [Car([179, 103], 0.)] * 20
+        self.cars = [Car([179, 103], 0., track)] * 20
         self.draw_all(track, self.cars)
 
     def main_loop(self):
