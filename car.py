@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from functools import partial
 
 input_layer_size = 5
-hidden_layer_size = 10
+hidden_layer_size = 5
 num_label = 3
 
 
@@ -20,17 +20,29 @@ class CarOrder(Enum):
 
 class Car:
 
-    def __init__(self, position, rotation, track) -> None:
+    def __init__(self,track) -> None:
         super().__init__()
-        self.position = position
-        self.rotation = rotation
+        self.car_length = 50
+        self.car_width = 25
+        self.position = [179, 103]
+        self.rotation = 0.
         self.rotation_rate = sp.pi / 8
         self.theta_1 = np.random.randn(hidden_layer_size, input_layer_size + 1)
         self.theta_2 = np.random.randn(num_label, hidden_layer_size + 1)
+        self.sensor_range = 500
         self.sensor_distances = [0, 0, 0, 0, 0]
         self.track = track
+        self.active = True
+
+    def reset_values(self):
+        self.position = [179, 103]
+        self.rotation = 0.
+        self.active = True
 
     def order(self, direction):
+        if not self.active:
+            return
+        # print('MOVE !')
         if direction == 1:
             self.turn_left()
             self.move_forward()
@@ -59,7 +71,7 @@ class Car:
 
     def get_sensors_value(self):
         self.sensor_distances = [10_000, 10_000, 10_000, 10_000, 10_000]
-        sensors = [
+        self.sensors = [
             self.get_sensor_left_1(),
             self.get_sensor_left_2(),
             self.get_sensor_middle(),
@@ -67,43 +79,51 @@ class Car:
             self.get_sensor_right_2()
         ]
         sensor_idx = 0
-        for s in sensors:
-            with Pool(len(self.track)) as p:
-                intersect = p.map(partial(segment_intersect, line2=s), self.track)
+        for s in self.sensors:
+            # with Pool(len(self.track)) as p:
+            #     intersect = p.map(partial(segment_intersect, line2=s), self.track)
+            intersect = []
+            for s_track in self.track:
+                intersect.append(segment_intersect(s, s_track))
             for i in intersect:
                 if i is not None:
                     dist = math.hypot(i[0] - self.position[0], i[1] - self.position[1])
                     if self.sensor_distances[sensor_idx] > dist:
                         self.sensor_distances[sensor_idx] = dist
             sensor_idx += 1
+        for s in self.sensor_distances:
+            if s < 30:
+                self.active = False
+                break
+        return self.sensor_distances
 
     def get_sensor_left_1(self):
         return Car.rotate_2d(
-            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + 50]]),
+            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation - sp.pi / 6)
 
     def get_sensor_left_2(self):
         return Car.rotate_2d(
-            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + 50]]),
+            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation - sp.pi / 12)
 
     def get_sensor_middle(self):
         return Car.rotate_2d(
-            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + 50]]),
+            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation)
 
     def get_sensor_right_1(self):
         return Car.rotate_2d(
-            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + 50]]),
+            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation + sp.pi / 6)
 
     def get_sensor_right_2(self):
         return Car.rotate_2d(
-            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + 50]]),
+            sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation + sp.pi / 12)
 
