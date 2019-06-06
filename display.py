@@ -1,5 +1,6 @@
 import pygame
 import track
+import trigonometrie
 from algo_gen import AlgoGen
 from car import *
 
@@ -8,31 +9,33 @@ class Display:
 
     def __init__(self, track) -> None:
         super().__init__()
+        # DISPLAY VALUES
+        self.debug = False
+
+        # DIPLAY INFO
         self.w = 800
-        self.h = 800
-        # slightly off-white background
+        self.h = 1200
         self.bgcolor = (0xf1, 0xf2, 0xf3)
-        # black for drawing
         self.fgcolor = (0, 0, 0)
-        # green for "active" car
         self.greencolor = (0, 0xff, 0)
-        # red for "deactive" car
         self.redcolor = (0xff, 0, 0)
-        # CPU throttle, higher number = less CPU hogging
-        self.delay = 200
-        # key repeat delay, interval
+        self.delay = 20
         self.key_delay = 20
         self.key_interval = 20
         self.screen = pygame.display.set_mode((self.w + 1, self.h + 1))
         self.clock = pygame.time.Clock()
         pygame.font.init()
-        self.myfont = pygame.font.SysFont('Comic Sans MS', 30)
         pygame.key.set_repeat(self.key_delay, self.key_interval)
-        self.gen = 1
+        self.myfont = pygame.font.SysFont('Arial', 20)
+
+        # TRACK INFO
         self.track = track
-        self.cars = [Car(track) for i in range(30)]
-        self.draw_all(track, self.cars)
-        self.algo_gen = AlgoGen(self.cars, 30, 8, 2, 20, 10)
+        self.cars = [Car(track) for i in range(50)]
+        self.gen = 1
+
+        # ALGO GEN INFO
+        self.algo_gen = AlgoGen(self.cars, 50, 8, 8, 20, 10)
+
 
     def is_any_active_car(self):
         for c in self.algo_gen.population:
@@ -46,15 +49,17 @@ class Display:
         pos = ''
         pos1 = ()
         i = 30
+        tmp = self.algo_gen.count_active_car()
         # self.algo_gen.do_one_cycle()
         # self.algo_gen.move_population()
         intersect_lines = self.track.copy()
 
         while running:
             # print('while running')
-
             if self.is_any_active_car():
-                print(f'Car count: {self.algo_gen.count_active_car()}')
+                if self.algo_gen.count_active_car() != tmp:
+                    print(f'Car count: {self.algo_gen.count_active_car()}')
+                    tmp = self.algo_gen.count_active_car()
                 self.algo_gen.move_population()
             else:
                 self.gen += 1
@@ -62,14 +67,15 @@ class Display:
                 self.algo_gen.do_one_cycle()
                 for p in self.algo_gen.population:
                     p.reset_values()
+                tmp = self.algo_gen.count_active_car()
             for event in pygame.event.get():
                 # print('if for event')
                 if event.type == pygame.QUIT:
                     running = False
 
                 elif event.type == pygame.KEYDOWN:
-                    # print(f'event.type={event.type}')
-                    # print(f'event.key={event.key}')
+                    print(f'event.type={event.type}')
+                    print(f'event.key={event.key}')
                     if event.key == pygame.K_q:
                         running = False
                     if event.key == pygame.K_r:
@@ -85,6 +91,16 @@ class Display:
                         self.cars[0].turn_left()
                     if event.key == pygame.K_RIGHT:
                         self.cars[0].turn_right()
+                    if event.key == pygame.K_EQUALS:
+                        print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
+                        self.algo_gen.mutation_rate += 10
+                        print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
+                    if event.key == pygame.K_MINUS:
+                        print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
+                        self.algo_gen.mutation_rate -= 10
+                        print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
+                    if event.key == pygame.K_d:
+                        self.debug = not self.debug
                     # self.draw_all(self.track, self.cars)
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -103,12 +119,14 @@ class Display:
 
     def draw_all(self, lines, cars: [Car]):
         self.screen.fill(self.bgcolor)
+        self.draw_theta_table()
         for line in lines:
             pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
         for car in cars:
             self.draw_car(car.position, car.rotation, car.active)
-        textsurface = self.myfont.render(f'Generation {self.gen}', False, self.fgcolor)
-        self.screen.blit(textsurface, (50,50))
+        self.draw_text_info()
+        self.draw_zones_limits()
+        self.draw_zones_number()
         pygame.display.flip()
 
     def draw_car(self, position_vector, rotation, active):
@@ -142,8 +160,46 @@ class Display:
             pygame.draw.lines(self.screen, self.redcolor, True,
                               [corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right])
 
+    def draw_zones_limits(self):
+        if not self.debug:
+            return
+        for l in track.get_zones_limits():
+            self.draw_line(l)
+
     def draw_line(self, line):
         pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
+
+    def draw_text_info(self):
+        textsurface = self.myfont.render(f'Generation {self.gen} | Mutation Change {self.algo_gen.mutation_chance} | Mutation Rate {self.algo_gen.mutation_rate}', True, self.fgcolor)
+        self.screen.blit(textsurface, (150, 25))
+
+    def draw_zones_number(self):
+        if not self.debug:
+            return
+        i = 0
+        for p in track.get_polygon_zones():
+            textsurface = self.myfont.render(f'{i}', True, self.fgcolor)
+            point = p.centroid
+            self.screen.blit(textsurface, (point.coords[0][0], point.coords[0][1]))
+            i += 1
+
+    def draw_theta_table(self):
+        self.draw_line([(0, 800), (800, 800)])
+        cell_width = int(760 / (input_layer_size + 1))
+        cell_height = int(360 / (hidden_layer_size))
+        for i in range(input_layer_size + 1):
+            for j in range(hidden_layer_size):
+                pos_x_start = 20 + (i * cell_width)
+                pos_y_start = 820 + (j * cell_height)
+                pygame.draw.rect(self.screen, self.fgcolor, pygame.Rect(
+                    (pos_x_start, pos_y_start, cell_width, cell_height)
+                ), 1)
+                if self.algo_gen.population[0].theta_1[j][i] > 0:
+                    textsurface = self.myfont.render(f'{self.algo_gen.population[0].theta_1[j][i]:1.3f}', True, self.greencolor)
+                else:
+                    textsurface = self.myfont.render(f'{self.algo_gen.population[0].theta_1[j][i]:1.3f}', True, self.redcolor)
+                self.screen.blit(textsurface, (pos_x_start + int(cell_width / 2) - 5 , pos_y_start + int(cell_height / 2)))
+
 
 
 if __name__ == '__main__':

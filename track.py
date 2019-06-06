@@ -1,5 +1,6 @@
 from shapely.geometry.polygon import Polygon
 
+
 # ####################
 # TRACK BORDER 1
 # ####################
@@ -42,6 +43,11 @@ line29 = [(645, 581), (700, 517)]
 # ########################################
 # Lines for fitness zones
 # ########################################
+
+# line30 = [(565, 323), (749, 262)]
+# line31 = [(562, 316), (736, 224)]
+# line30 = [(565, 314), (737, 224)]
+
 line30_2 = [(88, 77), (260, 81)]
 line30 = [(92, 113), (260, 115)]
 line31 = [(260, 146), (97, 180)]
@@ -91,6 +97,7 @@ def get_track():
         line10, line11, line12, line13, line14, line15, line16, line17, line18, line19,
         line20, line21, line22, line23, line24, line25, line26, line27, line28, line29,
     ]
+
     # all_border_lines.extend([
     #     line30,
     #     line31,
@@ -106,6 +113,7 @@ def get_track():
     #     line41,
     #     line42,
     #     line43,
+    #     line43_bis,
     #     line44,
     #     line45,
     #     line46,
@@ -178,6 +186,51 @@ def get_zones():
         [line67[0], line67[1], line68[0], line68[1]],
     ]
     return zones
+
+def get_zones_limits():
+    zones_limits = [
+        line30_2,
+        line30,
+        line31,
+        line32,
+        line33,
+        line34,
+        line35,
+        line36,
+        line37,
+        line38,
+        line39,
+        line40,
+        line41,
+        line42,
+        line43,
+        line44,
+        line45,
+        line46,
+        line47,
+        line48,
+        line49,
+        line50,
+        line51,
+        line52,
+        line53,
+        line54,
+        line55,
+        line56,
+        line57,
+        line58,
+        line59,
+        line60,
+        line61,
+        line62,
+        line63,
+        line64,
+        line65,
+        line66,
+        line67,
+        line68
+    ]
+    return zones_limits
 
 
 def get_polygon_zones():

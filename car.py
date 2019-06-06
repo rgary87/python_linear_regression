@@ -11,7 +11,6 @@ input_layer_size = 5
 hidden_layer_size = 5
 num_label = 3
 
-
 class CarOrder(Enum):
     TURN_LEFT = 1
     FORWARD = 2
@@ -29,26 +28,33 @@ class Car:
         self.rotation_rate = sp.pi / 8
         self.theta_1 = np.random.randn(hidden_layer_size, input_layer_size + 1)
         self.theta_2 = np.random.randn(num_label, hidden_layer_size + 1)
-        self.sensor_range = 500
+        self.sensor_range = 800
         self.sensor_distances = [0, 0, 0, 0, 0]
         self.track = track
         self.active = True
+        self.move_step = 5
+
+        # self.inner_sensor_rotation = sp.pi / 12
+        # self.outer_sensor_rotation = sp.pi / 6
+
+        self.inner_sensor_rotation = sp.pi / 8
+        self.outer_sensor_rotation = sp.pi / 4
 
     def reset_values(self):
-        self.position = [179, 103]
+        self.position = [179, 135]
         self.rotation = 0.
         self.active = True
 
     def order(self, direction):
         if not self.active:
             return
-        # print('MOVE !')
-        if direction == 1:
+        # print('MOVE !',end='')
+        if direction == CarOrder.TURN_LEFT.value:
             self.turn_left()
             self.move_forward()
-        elif direction == 2:
+        elif direction == CarOrder.FORWARD.value:
             self.move_forward()
-        else:
+        elif direction == CarOrder.TURN_RIGHT.value:
             self.turn_right()
             self.move_forward()
 
@@ -56,7 +62,7 @@ class Car:
         points = Car.rotate_2d(
             sp.array([
                 [self.position[0], self.position[1]],
-                [self.position[0], self.position[1] + 10]
+                [self.position[0], self.position[1] + self.move_step]
             ]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation
@@ -92,22 +98,25 @@ class Car:
                         self.sensor_distances[sensor_idx] = dist
             sensor_idx += 1
         for s in self.sensor_distances:
+            if s > 1000:
+                print('WEIRD DISTANCE !')
             if s < 30:
                 self.active = False
                 break
+        self.sensor_distances = Car.normalize(self.sensor_distances)
         return self.sensor_distances
 
     def get_sensor_left_1(self):
         return Car.rotate_2d(
             sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
-            self.rotation - sp.pi / 6)
+            self.rotation - self.outer_sensor_rotation)
 
     def get_sensor_left_2(self):
         return Car.rotate_2d(
             sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
-            self.rotation - sp.pi / 12)
+            self.rotation - self.inner_sensor_rotation)
 
     def get_sensor_middle(self):
         return Car.rotate_2d(
@@ -119,13 +128,13 @@ class Car:
         return Car.rotate_2d(
             sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
-            self.rotation + sp.pi / 6)
+            self.rotation + self.outer_sensor_rotation)
 
     def get_sensor_right_2(self):
         return Car.rotate_2d(
             sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
-            self.rotation + sp.pi / 12)
+            self.rotation + self.inner_sensor_rotation)
 
     @staticmethod
     def rotate_2d(pts, cnt, ang):
@@ -134,3 +143,10 @@ class Car:
         Rotates points(n*2) about center cnt(2) by angle ang(1) in radian
         """
         return sp.dot(pts - cnt, sp.array([[sp.cos(ang), sp.sin(ang)], [-sp.sin(ang), sp.cos(ang)]])) + cnt
+
+    @staticmethod
+    def normalize(v):
+        norm = np.linalg.norm(v, ord=1)
+        if norm == 0:
+            norm = np.finfo(v.dtype).eps
+        return v / norm
