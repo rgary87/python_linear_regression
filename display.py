@@ -29,12 +29,13 @@ class Display:
         self.myfont = pygame.font.SysFont('Arial', 20)
 
         # TRACK INFO
+        population_size = 50
         self.track = track
-        self.cars = [Car(track) for i in range(50)]
+        self.cars = [Car(track) for i in range(population_size)]
         self.gen = 1
 
         # ALGO GEN INFO
-        self.algo_gen = AlgoGen(self.cars, 50, 8, 8, 20, 10)
+        self.algo_gen = AlgoGen(self.cars, population_size, int(population_size * 0.15), int(population_size * 0.15), 30, 10, int(population_size * 0.15))
 
 
     def is_any_active_car(self):
@@ -53,6 +54,7 @@ class Display:
         # self.algo_gen.do_one_cycle()
         # self.algo_gen.move_population()
         intersect_lines = self.track.copy()
+        print(f'Car count: {self.algo_gen.count_active_car()}')
 
         while running:
             # print('while running')

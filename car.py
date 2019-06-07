@@ -103,7 +103,7 @@ class Car:
             if s < 30:
                 self.active = False
                 break
-        self.sensor_distances = Car.normalize(self.sensor_distances)
+        self.sensor_distances = Car.normalize(self.sensor_distances + [self.sensor_range])[:-1]
         return self.sensor_distances
 
     def get_sensor_left_1(self):

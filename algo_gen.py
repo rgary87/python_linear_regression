@@ -16,7 +16,7 @@ def get_random_posneg_value():
 
 class AlgoGen:
     def __init__(self, population, population_size, selection_size, lucky_few_size, mutation_chance,
-                 mutation_rate) -> None:
+                 mutation_rate, to_regenerate) -> None:
         super().__init__()
         self.population = population
         self.population_size = population_size
@@ -24,7 +24,8 @@ class AlgoGen:
         self.lucky_few_size = lucky_few_size
         self.mutation_chance = mutation_chance
         self.mutation_rate = mutation_rate
-        self.to_breed = population_size - selection_size - lucky_few_size - 1
+        self.to_breed = population_size - selection_size - lucky_few_size - 1 - to_regenerate
+        self.to_regenerate = to_regenerate
         self.polygons = track.get_polygon_zones()
 
     def get_ordered_population_by_fitness(self, to_print):
@@ -77,6 +78,10 @@ class AlgoGen:
             if random.random() * 100 < self.mutation_chance:
                 population[i] = self.mutate(population[i])
 
+    def regenerate(self):
+        self.population += [Car(self.population[0].track) for i in range(self.to_regenerate)]
+        return self.population
+
     def move_population(self):
         for car in self.population:
             best_move = neural_network.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2) + 1
@@ -85,8 +90,13 @@ class AlgoGen:
 
     def do_one_cycle(self):
         # print('Cycle')
+        print(f'Population size for selection = {len(self.population)}')
         self.population = self.selection(self.population)
+        print(f'Population size for regenerate = {len(self.population)}')
+        self.population = self.regenerate()
+        print(f'Population size for cross_breed = {len(self.population)}')
         self.population = self.cross_breed(self.population)
+        print(f'Population size for mutate_population = {len(self.population)}')
         self.mutate_population(self.population[1:])
         self.population = [x[0] for x in self.get_ordered_population_by_fitness(True)]
 
