@@ -10,8 +10,10 @@ line00 = [(100, 100), (118, 240)]
 line01 = [(118, 240), (239, 336)]
 line02 = [(239, 336), (405, 350)]
 line03 = [(405, 350), (534, 287)]
-line04 = [(534, 287), (568, 299)]
-line05 = [(568, 299), (584, 439)]
+line04 = [(535, 288), (625, 300)]
+line04_2 = [(625, 300), (642, 364)]
+line05 = [(642, 364), (610, 412)]
+line05_2 = [(610, 412), (584, 439)]
 line06 = [(584, 439), (485, 503)]
 line07 = [(485, 503), (268, 468)]
 line08 = [(268, 468), (63, 520)]
@@ -93,7 +95,7 @@ line68 = [(783, 609), (704, 503)]
 def get_track():
     all_border_lines = [
         line00_bis,
-        line00, line01, line02, line03, line04, line05, line06, line07, line08, line09,
+        line00, line01, line02, line03, line04, line04_2, line05, line05_2, line06, line07, line08, line09,
         line10, line11, line12, line13, line14, line15, line16, line17, line18, line19,
         line20, line21, line22, line23, line24, line25, line26, line27, line28, line29,
     ]
@@ -238,4 +240,7 @@ def get_polygon_zones():
     polygons = [Polygon((z[0], z[1], z[2], z[3])) for z in zones]
     return polygons
 
+
+def get_start_point():
+    return 179, 135
 

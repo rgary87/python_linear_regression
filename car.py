@@ -8,40 +8,46 @@ from multiprocessing import Pool
 from functools import partial
 
 input_layer_size = 5
-hidden_layer_size = 5
-num_label = 3
+first_hidden_layer_size = 4
+second_hidden_layer_size = 3
+num_label = 5
+
 
 class CarOrder(Enum):
+    TURN_LEFT_SLOW_FORWARD = 4
     TURN_LEFT = 1
     FORWARD = 2
+    TURN_RIGHT_SLOW_FORWARD = 5
     TURN_RIGHT = 3
 
 
 class Car:
 
-    def __init__(self,track) -> None:
+    def __init__(self, start_point, track) -> None:
         super().__init__()
         self.car_length = 50
         self.car_width = 25
-        self.position = [179, 103]
+        self.start_point = start_point
+        self.position = start_point
         self.rotation = 0.
-        self.rotation_rate = sp.pi / 8
-        self.theta_1 = np.random.randn(hidden_layer_size, input_layer_size + 1)
-        self.theta_2 = np.random.randn(num_label, hidden_layer_size + 1)
+        self.rotation_rate = sp.pi / 12
+        self.theta_1 = np.random.randn(first_hidden_layer_size, input_layer_size + 1)
+        self.theta_2 = np.random.randn(second_hidden_layer_size, first_hidden_layer_size + 1)
+        self.theta_3 = np.random.randn(num_label, second_hidden_layer_size + 1)
         self.sensor_range = 800
         self.sensor_distances = [0, 0, 0, 0, 0]
         self.track = track
         self.active = True
         self.move_step = 5
 
-        # self.inner_sensor_rotation = sp.pi / 12
-        # self.outer_sensor_rotation = sp.pi / 6
+        self.inner_sensor_rotation = sp.pi / 12
+        self.outer_sensor_rotation = sp.pi / 6
 
-        self.inner_sensor_rotation = sp.pi / 8
-        self.outer_sensor_rotation = sp.pi / 4
+        # self.inner_sensor_rotation = sp.pi / 8
+        # self.outer_sensor_rotation = sp.pi / 4
 
     def reset_values(self):
-        self.position = [179, 135]
+        self.position = [self.start_point[0], self.start_point[1]]
         self.rotation = 0.
         self.active = True
 
@@ -57,8 +63,25 @@ class Car:
         elif direction == CarOrder.TURN_RIGHT.value:
             self.turn_right()
             self.move_forward()
+        elif direction == CarOrder.TURN_LEFT_SLOW_FORWARD.value:
+            self.turn_left()
+            self.move_slow_forward()
+        elif direction == CarOrder.TURN_RIGHT_SLOW_FORWARD.value:
+            self.turn_right()
+            self.move_slow_forward()
 
     def move_forward(self):
+        points = Car.rotate_2d(
+            sp.array([
+                [self.position[0], self.position[1]],
+                [self.position[0], self.position[1] + self.move_step]
+            ]),
+            sp.array([self.position[0], self.position[1]]),
+            self.rotation
+        )
+        self.position = [points[1][0], points[1][1]]
+
+    def move_slow_forward(self):
         points = Car.rotate_2d(
             sp.array([
                 [self.position[0], self.position[1]],
@@ -90,12 +113,13 @@ class Car:
             #     intersect = p.map(partial(segment_intersect, line2=s), self.track)
             intersect = []
             for s_track in self.track:
-                intersect.append(segment_intersect(s, s_track))
+                inter = segment_intersect(s, s_track)
+                if inter is not None:
+                    intersect.append(inter)
             for i in intersect:
-                if i is not None:
-                    dist = math.hypot(i[0] - self.position[0], i[1] - self.position[1])
-                    if self.sensor_distances[sensor_idx] > dist:
-                        self.sensor_distances[sensor_idx] = dist
+                dist = math.hypot(i[0] - self.position[0], i[1] - self.position[1])
+                if self.sensor_distances[sensor_idx] > dist:
+                    self.sensor_distances[sensor_idx] = dist
             sensor_idx += 1
         for s in self.sensor_distances:
             if s > 1000:
@@ -103,6 +127,7 @@ class Car:
             if s < 30:
                 self.active = False
                 break
+        # print(f'Distances: {self.sensor_distances}')
         self.sensor_distances = Car.normalize(self.sensor_distances + [self.sensor_range])[:-1]
         return self.sensor_distances
 

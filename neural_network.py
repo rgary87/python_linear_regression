@@ -12,9 +12,10 @@ def get_higher_index(tab: []):
     return index
 
 
-def neural_network(X, theta_1, theta_2):
+def neural_network(X, theta_1, theta_2, theta_3):
     h1 = sigmoid(np.dot(np.append([1], X), np.transpose(theta_1)))
     h2 = sigmoid(np.dot(np.append([1], h1), np.transpose(theta_2)))
-    return get_higher_index(h2)
+    h3 = sigmoid(np.dot(np.append([1], h2), np.transpose(theta_3)))
+    return get_higher_index(h3)
 
 

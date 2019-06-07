@@ -1,6 +1,6 @@
 import random
 import operator
-
+import numpy as np
 import track
 from car import Car
 from shapely.geometry import Point
@@ -16,7 +16,7 @@ def get_random_posneg_value():
 
 class AlgoGen:
     def __init__(self, population, population_size, selection_size, lucky_few_size, mutation_chance,
-                 mutation_rate, to_regenerate) -> None:
+                 mutation_rate, to_regenerate, polygon_zones) -> None:
         super().__init__()
         self.population = population
         self.population_size = population_size
@@ -26,7 +26,7 @@ class AlgoGen:
         self.mutation_rate = mutation_rate
         self.to_breed = population_size - selection_size - lucky_few_size - 1 - to_regenerate
         self.to_regenerate = to_regenerate
-        self.polygons = track.get_polygon_zones()
+        self.polygons = polygon_zones
 
     def get_ordered_population_by_fitness(self, to_print):
         val = {}
@@ -46,11 +46,16 @@ class AlgoGen:
         return select
 
     def breed_child(self, p1: Car, p2: Car):
-        child = Car(p1.track)
+        child = Car(p1.start_point, p1.track)
         for i in range(len(p1.theta_1)):
-            child.theta_1[i] = p1.theta_1[i] if random.random() * 100 < 50 else p2.theta_1[i]
+            for j in range(len(p1.theta_1[i])):
+                child.theta_1[i][j] = p1.theta_1[i][j] if random.random() * 100 < 50 else p2.theta_1[i][j]
         for i in range(len(p1.theta_2)):
-            child.theta_2[i] = p1.theta_2[i] if random.random() * 100 < 50 else p2.theta_2[i]
+           for j in range(len(p1.theta_2[i])):
+                child.theta_2[i][j] = p1.theta_2[i][j] if random.random() * 100 < 50 else p2.theta_2[i][j]
+        for i in range(len(p1.theta_3)):
+            for j in range(len(p1.theta_3[i])):
+                child.theta_3[i][j] = p1.theta_3[i][j] if random.random() * 100 < 50 else p2.theta_3[i][j]
         return child
 
     def cross_breed(self, population: [Car]):
@@ -62,15 +67,29 @@ class AlgoGen:
 
     def mutate(self, car: Car):
         mut = 0
-        for t1 in car.theta_1:
-            if random.random() * 100 < self.mutation_rate:
-                mut += 1
-                t1 += get_random_posneg_value()
-        for t2 in car.theta_2:
-            if random.random() * 100 < self.mutation_rate:
-                mut += 1
-                t2 += get_random_posneg_value()
-        # print(f'MUTATED {mut} TIMES !')
+        no_mut = 0
+        for ti in range(len(car.theta_1)):
+            for tj in car.theta_1[ti]:
+                if random.random() * 100 < self.mutation_rate:
+                    mut += 1
+                    tj += np.random.randn() / 2.
+                else:
+                    no_mut += 1
+        for ti in range(len(car.theta_2)):
+            for tj in car.theta_2[ti]:
+                if random.random() * 100 < self.mutation_rate:
+                    mut += 1
+                    tj += np.random.randn() / 2.
+                else:
+                    no_mut += 1
+        for ti in range(len(car.theta_3)):
+            for tj in car.theta_3[ti]:
+                if random.random() * 100 < self.mutation_rate:
+                    mut += 1
+                    tj += np.random.randn() / 2.
+                else:
+                    no_mut += 1
+        print(f'MUTATED {mut} TIMES OVER {mut + no_mut}!')
         return car
 
     def mutate_population(self, population: [Car]):
@@ -84,8 +103,9 @@ class AlgoGen:
 
     def move_population(self):
         for car in self.population:
-            best_move = neural_network.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2) + 1
-            car.order(best_move)
+            if car.active:
+                best_move = neural_network.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3) + 1
+                car.order(best_move)
         self.population = [x[0] for x in self.get_ordered_population_by_fitness(False)]
 
     def do_one_cycle(self):
@@ -97,8 +117,9 @@ class AlgoGen:
         print(f'Population size for cross_breed = {len(self.population)}')
         self.population = self.cross_breed(self.population)
         print(f'Population size for mutate_population = {len(self.population)}')
-        self.mutate_population(self.population[1:])
+        self.mutate_population(self.population[int(self.selection_size / 2):])
         self.population = [x[0] for x in self.get_ordered_population_by_fitness(True)]
+        print(f'Population size after cycle = {len(self.population)}')
 
     def calc_fitness(self, car: Car):
         car_in_zone = get_point_in_zone_x(self.polygons, car.position)
