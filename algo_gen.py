@@ -60,8 +60,12 @@ class AlgoGen:
 
     def cross_breed(self, population: [Car]):
         childs = []
+        print(f'to_breed: ({self.to_breed})' )
         for i in range(self.to_breed):
-            childs.append(self.breed_child(random.choice(population), random.choice(population)))
+            print(f'i % self.to_breed : {i} % {len(population)} : {i % len(population)}'
+                  f' | abs(int(len(population) - i - 1)): {abs(int(len(population) - i - 1))}'
+                  f' | abs(int(len(population) - i - 1)) % self.to_breed]: {abs(int(len(population) - i - 1)) % len(population)}')
+            childs.append(self.breed_child(population[i % len(population)], population[abs(int(len(population) - i - 1)) % len(population)]))
         population.extend(childs)
         return population
 
@@ -112,8 +116,8 @@ class AlgoGen:
         # print('Cycle')
         print(f'Population size for selection = {len(self.population)}')
         self.population = self.selection(self.population)
-        print(f'Population size for regenerate = {len(self.population)}')
-        self.population = self.regenerate()
+        # print(f'Population size for regenerate = {len(self.population)}')
+        # self.population = self.regenerate()
         print(f'Population size for cross_breed = {len(self.population)}')
         self.population = self.cross_breed(self.population)
         print(f'Population size for mutate_population = {len(self.population)}')

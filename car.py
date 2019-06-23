@@ -10,15 +10,15 @@ from functools import partial
 input_layer_size = 5
 first_hidden_layer_size = 4
 second_hidden_layer_size = 3
-num_label = 5
+num_label = 2
 
 
 class CarOrder(Enum):
     TURN_LEFT_SLOW_FORWARD = 4
     TURN_LEFT = 1
-    FORWARD = 2
+    FORWARD = 3
     TURN_RIGHT_SLOW_FORWARD = 5
-    TURN_RIGHT = 3
+    TURN_RIGHT = 2
 
 
 class Car:
@@ -30,7 +30,7 @@ class Car:
         self.start_point = start_point
         self.position = start_point
         self.rotation = 0.
-        self.rotation_rate = sp.pi / 12
+        self.rotation_rate = sp.pi / 48
         self.theta_1 = np.random.randn(first_hidden_layer_size, input_layer_size + 1)
         self.theta_2 = np.random.randn(second_hidden_layer_size, first_hidden_layer_size + 1)
         self.theta_3 = np.random.randn(num_label, second_hidden_layer_size + 1)
@@ -38,7 +38,7 @@ class Car:
         self.sensor_distances = [0, 0, 0, 0, 0]
         self.track = track
         self.active = True
-        self.move_step = 5
+        self.move_step = 1
 
         self.inner_sensor_rotation = sp.pi / 12
         self.outer_sensor_rotation = sp.pi / 6

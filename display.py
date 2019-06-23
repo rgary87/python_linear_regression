@@ -21,7 +21,7 @@ class Display:
         self.fgcolor = (0, 0, 0)
         self.greencolor = (0, 0xff, 0)
         self.redcolor = (0xff, 0, 0)
-        self.delay = 20
+        self.delay = 10
         self.key_delay = 20
         self.key_interval = 20
         self.screen = pygame.display.set_mode((self.w + 1, self.h + 1))
@@ -31,7 +31,7 @@ class Display:
         self.myfont = pygame.font.SysFont('Arial', 20)
 
         # TRACK INFO
-        population_size = 50
+        population_size = 35
         self.track = track
         self.zone_limits = zone_limits
         self.polygon_zones = polygon_zones
@@ -40,8 +40,8 @@ class Display:
         self.gen = 1
 
         # ALGO GEN INFO
-        self.algo_gen = AlgoGen(self.cars, population_size, int(population_size * 0.15), int(population_size * 0.15),
-                                30, 50, 0, self.polygon_zones)
+        self.algo_gen = AlgoGen(self.cars, population_size, selection_size=int(population_size * 0.15), lucky_few_size=int(population_size * 0.15),
+                                mutation_chance=30, mutation_rate=50, to_regenerate=0, polygon_zones=self.polygon_zones)
 
     def is_any_active_car(self):
         for c in self.algo_gen.population:
