@@ -21,7 +21,7 @@ class Display:
         self.fgcolor = (0, 0, 0)
         self.greencolor = (0, 0xff, 0)
         self.redcolor = (0xff, 0, 0)
-        self.delay = 10
+        self.delay = 0
         self.key_delay = 20
         self.key_interval = 20
         self.screen = pygame.display.set_mode((self.w + 1, self.h + 1))
@@ -31,7 +31,7 @@ class Display:
         self.myfont = pygame.font.SysFont('Arial', 20)
 
         # TRACK INFO
-        population_size = 35
+        population_size = 50
         self.track = track
         self.zone_limits = zone_limits
         self.polygon_zones = polygon_zones
@@ -40,8 +40,14 @@ class Display:
         self.gen = 1
 
         # ALGO GEN INFO
-        self.algo_gen = AlgoGen(self.cars, population_size, selection_size=int(population_size * 0.15), lucky_few_size=int(population_size * 0.15),
-                                mutation_chance=30, mutation_rate=50, to_regenerate=0, polygon_zones=self.polygon_zones)
+        self.algo_gen = AlgoGen(self.cars,
+                                population_size,
+                                selection_size=int(population_size * 0.25),
+                                lucky_few_size=int(population_size * 0.15),
+                                mutation_chance=30,
+                                mutation_rate=50,
+                                to_regenerate=0,
+                                polygon_zones=self.polygon_zones)
 
     def is_any_active_car(self):
         for c in self.algo_gen.population:
@@ -65,8 +71,6 @@ class Display:
 
         while running:
             # print('while running')
-            if self.gen > 40:
-                break
             if compute:
                 if self.is_any_active_car():
                     if self.algo_gen.count_active_car() != tmp:
@@ -94,15 +98,15 @@ class Display:
                         self.algo_gen.do_one_cycle()
                         for p in self.algo_gen.population:
                             p.reset_values()
-                    if event.key == pygame.K_UP:
-                        self.cars[0].move_forward()
-                        self.cars[0].get_sensors_value()
-                        intersect_lines = self.track.copy()
-                        intersect_lines.extend(self.cars[0].sensors)
-                    if event.key == pygame.K_LEFT:
-                        self.cars[0].turn_left()
-                    if event.key == pygame.K_RIGHT:
-                        self.cars[0].turn_right()
+                    # if event.key == pygame.K_UP:
+                    #     self.cars[0].move_forward()
+                    #     self.cars[0].get_sensors_value()
+                    #     intersect_lines = self.track.copy()
+                    #     intersect_lines.extend(self.cars[0].sensors)
+                    # if event.key == pygame.K_LEFT:
+                    #     self.cars[0].turn_left()
+                    # if event.key == pygame.K_RIGHT:
+                    #     self.cars[0].turn_right()
                     if event.key == pygame.K_EQUALS:
                         print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
                         self.algo_gen.mutation_rate += 10
@@ -130,7 +134,7 @@ class Display:
 
             self.draw_all(intersect_lines, self.algo_gen.population)
             # sleep
-            self.clock.tick(self.delay)
+            # self.clock.tick(self.delay)
 
     def draw_all(self, lines, cars: [Car]):
         self.screen.fill(self.bgcolor)

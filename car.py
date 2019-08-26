@@ -31,6 +31,14 @@ class Car:
         self.position = start_point
         self.rotation = 0.
         self.rotation_rate = sp.pi / 48
+        # [
+        #     [-1.275, -1.678, +1.751, -0.929],
+        #     [+0.974, -0.116, -0.186, -0.143],
+        #     [+0.540, -0.284, -0.845, -0.974],
+        #     [+0.457, +0.906, +1.322, +0.435],
+        #     [-0.488, +0.142, -1.490, +0.427],
+        #     [+1.093, -2.026, -0.438, +0.565],
+        # ]
         self.theta_1 = np.random.randn(first_hidden_layer_size, input_layer_size + 1)
         self.theta_2 = np.random.randn(second_hidden_layer_size, first_hidden_layer_size + 1)
         self.theta_3 = np.random.randn(num_label, second_hidden_layer_size + 1)
@@ -39,20 +47,27 @@ class Car:
         self.track = track
         self.active = True
         self.move_step = 1
+        self.default_max_move_allowed = 5000
+        self.max_move_allowed = self.default_max_move_allowed
 
         self.inner_sensor_rotation = sp.pi / 12
         self.outer_sensor_rotation = sp.pi / 6
 
-        # self.inner_sensor_rotation = sp.pi / 8
-        # self.outer_sensor_rotation = sp.pi / 4
+        self.fitness_value = 0
 
     def reset_values(self):
         self.position = [self.start_point[0], self.start_point[1]]
         self.rotation = 0.
         self.active = True
+        self.max_move_allowed = self.default_max_move_allowed
 
     def order(self, direction):
         if not self.active:
+            return
+        self.max_move_allowed -= 1
+        if self.max_move_allowed == 0:
+            print("Too many moves done !")
+            self.active = False
             return
         # print('MOVE !',end='')
         if direction == CarOrder.TURN_LEFT.value:
@@ -109,6 +124,9 @@ class Car:
         ]
         sensor_idx = 0
         for s in self.sensors:
+            # results = [self.p.apply_async(segment_intersect, (s, s_track)) for s_track in self.track]
+            # intersect = [res.get(timeout=1) for res in results]
+            # print(f'Intersect done : {intersect}')
             # with Pool(len(self.track)) as p:
             #     intersect = p.map(partial(segment_intersect, line2=s), self.track)
             intersect = []
@@ -123,7 +141,7 @@ class Car:
             sensor_idx += 1
         for s in self.sensor_distances:
             if s > 1000:
-                print('WEIRD DISTANCE !')
+                print(f'WEIRD DISTANCE ! s: {s}')
             if s < 30:
                 self.active = False
                 break
