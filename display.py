@@ -1,6 +1,8 @@
+import time
+
 import pygame
-import track
-import track2
+# import track as track
+import track2 as track
 import trigonometrie
 from algo_gen import AlgoGen
 from car import *
@@ -21,6 +23,15 @@ class Display:
         self.fgcolor = (0, 0, 0)
         self.greencolor = (0, 0xff, 0)
         self.redcolor = (0xff, 0, 0)
+
+        self.blues_colors = [
+            (0xE6, 0xE6, 0xFA),
+            (0x87, 0xCE, 0xFA),
+            (0x1E, 0x90, 0xFF),
+            (0x7B, 0x68, 0xEE),
+            (0x00, 0x00, 0xFF)
+        ]
+
         self.delay = 0
         self.key_delay = 20
         self.key_interval = 20
@@ -84,6 +95,7 @@ class Display:
                     for p in self.algo_gen.population:
                         p.reset_values()
                     tmp = self.algo_gen.count_active_car()
+                    time.sleep(3)
             for event in pygame.event.get():
                 # print('if for event')
                 if event.type == pygame.QUIT:
@@ -142,13 +154,16 @@ class Display:
         for line in lines:
             pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
         for car in cars:
-            self.draw_car(car.position, car.rotation, car.active)
+            self.draw_car(car)
         self.draw_text_info()
         self.draw_zones_limits()
         self.draw_zones_number()
         pygame.display.flip()
 
-    def draw_car(self, position_vector, rotation, active):
+    def draw_car(self, car):
+        position_vector = car.position
+        rotation = car.rotation
+        active = car.active
         car_length = 50
         car_width = 25
         corner_top_left = [position_vector[0] - int(car_width / 2), position_vector[1] - int(car_length / 2)]
@@ -176,6 +191,13 @@ class Display:
             pygame.draw.lines(self.screen, self.greencolor, True, [corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right])
         else:
             pygame.draw.lines(self.screen, self.redcolor, True, [corner_top_left, corner_top_right, corner_bottom_left, corner_bottom_right])
+        self.draw_sensors_lines(car)
+
+    def draw_sensors_lines(self, car):
+        i = 0
+        for s in car.sensor_intersect_points:
+            pygame.draw.aaline(self.screen, self.blues_colors[i], (car.position[0], car.position[1]), (s[0], s[1]))
+            i += 1
 
     def draw_zones_limits(self):
         if not self.debug:
@@ -218,10 +240,11 @@ class Display:
 
 if __name__ == '__main__':
     import sys
+    work_on_track = track
     if len(sys.argv) > 1 and sys.argv[1] == "draw":
-        display = display_draw_only.DisplayOnlyDraw(track2.get_track())
+        display = display_draw_only.DisplayOnlyDraw(work_on_track.get_track())
         display.main_loop()
     else:
-        display = Display(track2.get_start_point(), track2.get_track(), track2.get_zones_limits(), track2.get_polygon_zones())
+        display = Display(work_on_track.get_start_point(), work_on_track.get_track(), work_on_track.get_zones_limits(), work_on_track.get_polygon_zones())
         display.main_loop()
 

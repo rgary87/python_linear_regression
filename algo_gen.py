@@ -132,13 +132,18 @@ class AlgoGen:
         print(f'Population size after cycle = {len(self.population)}')
 
     def calc_fitness(self, car: Car):
+        if not car.active:
+            return car.fitness_value
         car_in_zone = get_point_in_zone_x(self.polygons, car.position)
-        if car_in_zone is None:
+        if car_in_zone is None or car_in_zone < car.max_zone_entered:
+            print(f"U-turns are BAD. You were in zone {car.max_zone_entered} but returned to {car_in_zone}")
             car.active = False
             car.fitness_value = -1
+            car.max_zone_entered = car_in_zone
             return -1
+        car.max_zone_entered = car_in_zone
         # return car_in_zone #* 400 + (car.position[0] * 1.3) + car.position[1]
-        car.fitness_value = car_in_zone * (car.max_move_allowed / car.default_max_move_allowed)
+        car.fitness_value = car_in_zone * (float(car.move_done) / float(car.default_max_move_allowed))
         return car.fitness_value #* 400 + (car.position[0] * 1.3) + car.position[1]
 
     def count_active_car(self):

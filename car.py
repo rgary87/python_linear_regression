@@ -44,28 +44,31 @@ class Car:
         self.theta_3 = np.random.randn(num_label, second_hidden_layer_size + 1)
         self.sensor_range = 800
         self.sensor_distances = [0, 0, 0, 0, 0]
+        self.sensor_intersect_points = [(0, 0),(0, 0),(0, 0),(0, 0),(0, 0)]
         self.track = track
         self.active = True
         self.move_step = 1
         self.default_max_move_allowed = 5000
-        self.max_move_allowed = self.default_max_move_allowed
+        self.move_done = self.default_max_move_allowed
+        self.max_zone_entered = -1
 
         self.inner_sensor_rotation = sp.pi / 12
         self.outer_sensor_rotation = sp.pi / 6
 
-        self.fitness_value = 0
+        self.fitness_value = 0.
 
     def reset_values(self):
         self.position = [self.start_point[0], self.start_point[1]]
         self.rotation = 0.
         self.active = True
-        self.max_move_allowed = self.default_max_move_allowed
+        self.move_done = self.default_max_move_allowed
+        self.max_zone_entered = -1
 
     def order(self, direction):
         if not self.active:
             return
-        self.max_move_allowed -= 1
-        if self.max_move_allowed == 0:
+        self.move_done += 1
+        if self.move_done == self.default_max_move_allowed:
             print("Too many moves done !")
             self.active = False
             return
@@ -138,15 +141,21 @@ class Car:
                 dist = math.hypot(i[0] - self.position[0], i[1] - self.position[1])
                 if self.sensor_distances[sensor_idx] > dist:
                     self.sensor_distances[sensor_idx] = dist
+                    self.sensor_intersect_points[sensor_idx] = (i[0], i[1])
             sensor_idx += 1
         for s in self.sensor_distances:
             if s > 1000:
                 print(f'WEIRD DISTANCE ! s: {s}')
             if s < 30:
                 self.active = False
+                print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} | {self.sensor_distances[4]} ")
                 break
         # print(f'Distances: {self.sensor_distances}')
-        self.sensor_distances = Car.normalize(self.sensor_distances + [self.sensor_range])[:-1]
+
+        # #######################################
+        # THIS IS HERE TO NORMALIZE THE DISTANCES
+        # #######################################
+        # self.sensor_distances = Car.normalize(self.sensor_distances + [self.sensor_range])[:-1]
         return self.sensor_distances
 
     def get_sensor_left_1(self):
