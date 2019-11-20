@@ -19,3 +19,14 @@ def neural_network(X, theta_1, theta_2, theta_3):
     return get_higher_index(h3)
 
 
+def limit_theta_value_to_boundaries(val) -> float:
+    if -1 < val < 1:
+        return val
+    if val < 0:
+        return val + 1
+    else:
+        return val - 1
+
+
+def get_random_value_within_boundaries() -> float:
+    return 2 * np.random.random() - 1

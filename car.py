@@ -1,16 +1,22 @@
 import math
+import uuid
 
 import scipy as sp
 import numpy as np
 from enum import Enum
+
+from hashlib import md5
+
 from trigonometrie import segment_intersect
 from multiprocessing import Pool
 from functools import partial
 
-input_layer_size = 5
-first_hidden_layer_size = 4
-second_hidden_layer_size = 3
-num_label = 2
+# REMOVE FRONT SENSOR
+# input_layer_size = 5
+input_layer_size = 4
+first_hidden_layer_size = 5
+second_hidden_layer_size = 4
+num_label = 3
 
 
 class CarOrder(Enum):
@@ -23,7 +29,18 @@ class CarOrder(Enum):
 
 class Car:
 
-    def __init__(self, start_point, track) -> None:
+    def clone(self):
+        clone = Car(self.start_point, self.track, None)
+        for ts in range(len(self.all_thetas)):
+            for ti in range(len(self.all_thetas[ts])):
+                for tj in range(len(self.all_thetas[ts][ti])):
+                    clone.all_thetas[ts][ti][tj] = self.all_thetas[ts][ti][tj]
+        clone.fitness_value = float(self.fitness_value)
+        clone.position = self.position
+        clone.max_zone_entered = self.max_zone_entered
+        return clone
+
+    def __init__(self, start_point, track, saved_values) -> None:
         super().__init__()
         self.car_length = 50
         self.car_width = 25
@@ -31,23 +48,27 @@ class Car:
         self.position = start_point
         self.rotation = 0.
         self.rotation_rate = sp.pi / 48
-        # [
-        #     [-1.275, -1.678, +1.751, -0.929],
-        #     [+0.974, -0.116, -0.186, -0.143],
-        #     [+0.540, -0.284, -0.845, -0.974],
-        #     [+0.457, +0.906, +1.322, +0.435],
-        #     [-0.488, +0.142, -1.490, +0.427],
-        #     [+1.093, -2.026, -0.438, +0.565],
-        # ]
-        self.theta_1 = np.random.randn(first_hidden_layer_size, input_layer_size + 1)
-        self.theta_2 = np.random.randn(second_hidden_layer_size, first_hidden_layer_size + 1)
-        self.theta_3 = np.random.randn(num_label, second_hidden_layer_size + 1)
+        if saved_values:
+            self.theta_1 = np.asarray(saved_values['theta_1'])
+            self.theta_2 = np.asarray(saved_values['theta_2'])
+            self.theta_3 = np.asarray(saved_values['theta_3'])
+        else:
+            self.theta_1 = 2 * np.random.random_sample((first_hidden_layer_size, input_layer_size + 1)) - 1
+            self.theta_2 = 2 * np.random.random_sample((second_hidden_layer_size, first_hidden_layer_size + 1)) - 1
+            self.theta_3 = 2 * np.random.random_sample((num_label, second_hidden_layer_size + 1)) - 1
+
+        self.all_thetas = [self.theta_1, self.theta_2, self.theta_3]
         self.sensor_range = 800
-        self.sensor_distances = [0, 0, 0, 0, 0]
-        self.sensor_intersect_points = [(0, 0),(0, 0),(0, 0),(0, 0),(0, 0)]
+        # REMOVE FRONT SENSOR
+        # self.sensor_distances = [0, 0, 0, 0, 0]
+        self.sensor_distances = [0, 0, 0, 0]
+        # REMOVE FRONT SENSOR
+        # self.sensor_intersect_points = [(0, 0),(0, 0),(0, 0),(0, 0),(0, 0)]
+        self.sensor_intersect_points = [(0, 0),(0, 0),(0, 0),(0, 0)]
         self.track = track
         self.active = True
-        self.move_step = 1
+        # self.move_step = 1
+        self.move_step = 5
         self.default_max_move_allowed = 5000
         self.move_done = self.default_max_move_allowed
         self.max_zone_entered = -1
@@ -56,6 +77,7 @@ class Car:
         self.outer_sensor_rotation = sp.pi / 6
 
         self.fitness_value = 0.
+
 
     def reset_values(self):
         self.position = [self.start_point[0], self.start_point[1]]
@@ -117,11 +139,20 @@ class Car:
         self.rotation -= self.rotation_rate
 
     def get_sensors_value(self):
-        self.sensor_distances = [10_000, 10_000, 10_000, 10_000, 10_000]
+        # REMOVE FRONT SENSOR
+        # self.sensor_distances = [10_000, 10_000, 10_000, 10_000, 10_000]
+        self.sensor_distances = [10_000, 10_000, 10_000, 10_000]
+        # REMOVE FRONT SENSOR
+        # self.sensors = [
+        #     self.get_sensor_left_1(),
+        #     self.get_sensor_left_2(),
+        #     self.get_sensor_middle(),
+        #     self.get_sensor_right_1(),
+        #     self.get_sensor_right_2()
+        # ]
         self.sensors = [
             self.get_sensor_left_1(),
             self.get_sensor_left_2(),
-            self.get_sensor_middle(),
             self.get_sensor_right_1(),
             self.get_sensor_right_2()
         ]
@@ -148,7 +179,9 @@ class Car:
                 print(f'WEIRD DISTANCE ! s: {s}')
             if s < 30:
                 self.active = False
-                print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} | {self.sensor_distances[4]} ")
+                # REMOVE FRONT SENSOR
+                # print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} | {self.sensor_distances[4]} ")
+                print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} ")
                 break
         # print(f'Distances: {self.sensor_distances}')
 
@@ -187,6 +220,9 @@ class Car:
             sp.array([[self.position[0], self.position[1]], [self.position[0], self.position[1] + self.sensor_range]]),
             sp.array([self.position[0], self.position[1]]),
             self.rotation + self.inner_sensor_rotation)
+
+
+
 
     @staticmethod
     def rotate_2d(pts, cnt, ang):

@@ -6,9 +6,10 @@ import numpy as np
 import track
 from car import Car
 from shapely.geometry import Point
-import neural_network
+import neural_network as nn
 from trigonometrie import get_point_in_zone_x
 
+import color
 
 def get_random_posneg_value():
     v = random.random() * 0.1
@@ -38,42 +39,70 @@ class AlgoGen:
         print([x[1] for x in val]) if to_print else ''
         return val
 
+    @staticmethod
+    def get_fitness_sum(population : [Car]):
+        fitness_sum = 0
+        for car in population:
+            fitness_sum += car.fitness_value
+        return fitness_sum
+
+    @staticmethod
+    def select_based_on_fitness(population : [Car], fitness_sum):
+        rand = np.random.random() * fitness_sum
+        running_sum = 0
+        for i in range(len(population)):
+            running_sum += population[i].fitness_value
+            if running_sum > rand:
+                return population[i].clone()
+
     def selection(self, population: [Car]):
-        select = [population[0]]
-        last_fitness_val = -1
-        selected = 0
-        for p in population:
-            if selected >= self.selection_size -1:
-                break
-            if p.fitness_value != last_fitness_val:
-                last_fitness_val = p.fitness_value
-                select.append(p)
-                selected += 1
-        # select = population[:self.selection_size]
-        luckies = []
-        for i in range(self.lucky_few_size):
-            luckies.append(random.choice(population))
-        select.extend(luckies)
+        select = [population[0].clone()]
+        # THIS WOULD NEED A BIT OF DISTANCE-BASED SELECTION
+        fitness_sum = self.get_fitness_sum(population)
+        while True:
+            if len(select) == self.population_size: break
+            first_parent = self.select_based_on_fitness(population, fitness_sum)
+            second_parent = self.select_based_on_fitness(population, fitness_sum)
+            child = self.breed_child(first_parent, second_parent)
+            if len(select) == self.population_size: break
+            select.append(first_parent)
+            if len(select) == self.population_size: break
+            select.append(second_parent)
+            if len(select) == self.population_size: break
+            select.append(child)
         return select
 
+    # def old_selection(self, population: [Car]):
+    #     select = [population[0]]
+    #     last_fitness_val = -1
+    #     selected = 0
+    #     for p in population:
+    #
+    #         if selected >= self.selection_size -1:
+    #             break
+    #         if p.fitness_value != last_fitness_val:
+    #             last_fitness_val = p.fitness_value
+    #             select.append(p)
+    #             selected += 1
+    #     # select = population[:self.selection_size]
+    #     luckies = []
+    #     for i in range(self.lucky_few_size):
+    #         luckies.append(random.choice(population))
+    #     select.extend(luckies)
+    #     return select
+
     def breed_child(self, p1: Car, p2: Car):
-        child = Car(p1.start_point, p1.track)
-        for i in range(len(p1.theta_1)):
-            for j in range(len(p1.theta_1[i])):
-                child.theta_1[i][j] = p1.theta_1[i][j] if random.random() * 100 < 50 else p2.theta_1[i][j]
-        for i in range(len(p1.theta_2)):
-           for j in range(len(p1.theta_2[i])):
-                child.theta_2[i][j] = p1.theta_2[i][j] if random.random() * 100 < 50 else p2.theta_2[i][j]
-        for i in range(len(p1.theta_3)):
-            for j in range(len(p1.theta_3[i])):
-                child.theta_3[i][j] = p1.theta_3[i][j] if random.random() * 100 < 50 else p2.theta_3[i][j]
+        child = Car(p1.start_point, p1.track, None)
+        for ts in range(len(child.all_thetas)):
+            for ti in range(len(child.all_thetas[ts])):
+                for tj in range(len(child.all_thetas[ts][ti])):
+                    child.all_thetas[ts][ti][tj] = p1.all_thetas[ts][ti][tj] if random.random() * 100 < 50 else p2.all_thetas[ts][ti][tj]
         return child
 
     def cross_breed(self, population: [Car]):
         children = []
         print(f'to_breed: ({self.population_size - len(self.population)})' )
         for i in range(self.population_size - len(self.population)):
-            # s
             children.append(self.breed_child(population[i % len(population)], population[abs(int(len(population) - i - 1)) % len(population)]))
         population.extend(children)
         return population
@@ -81,27 +110,15 @@ class AlgoGen:
     def mutate(self, car: Car):
         mut = 0
         no_mut = 0
-        for ti in range(len(car.theta_1)):
-            for tj in range(len(car.theta_1[ti])):
-                if random.random() * 100 < self.mutation_rate:
-                    mut += 1
-                    car.theta_1[ti][tj] += np.random.randn() / 2.
-                else:
-                    no_mut += 1
-        for ti in range(len(car.theta_2)):
-            for tj in range(len(car.theta_2[ti])):
-                if random.random() * 100 < self.mutation_rate:
-                    mut += 1
-                    car.theta_2[ti][tj] += np.random.randn() / 2.
-                else:
-                    no_mut += 1
-        for ti in range(len(car.theta_3)):
-            for tj in range(len(car.theta_3[ti])):
-                if random.random() * 100 < self.mutation_rate:
-                    mut += 1
-                    car.theta_3[ti][tj] += np.random.randn() / 2.
-                else:
-                    no_mut += 1
+        for ts in range(len(car.all_thetas)):
+            for ti in range(len(car.all_thetas[ts])):
+                for tj in range(len(car.all_thetas[ts][ti])):
+                    if random.random() * 100 < self.mutation_rate:
+                        mut += 1
+                        car.all_thetas[ts][ti][tj] += nn.get_random_value_within_boundaries()
+                        car.all_thetas[ts][ti][tj] = nn.limit_theta_value_to_boundaries(car.all_thetas[ts][ti][tj])
+                    else:
+                        no_mut += 1
         print(f'MUTATED {mut} TIMES OVER {mut + no_mut}!')
         return car
 
@@ -113,7 +130,7 @@ class AlgoGen:
     @staticmethod
     def move_car(car):
         if car.active:
-            best_move = neural_network.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3) + 1
+            best_move = nn.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3) + 1
             car.order(best_move)
 
     def move_population(self):
@@ -122,12 +139,19 @@ class AlgoGen:
 
     def do_one_cycle(self):
         # print('Cycle')
+        print(f'{color.OKBLUE}Population fitness before selection new generation{color.ENDC}')
+        self.population = [x[0] for x in self.get_ordered_population_by_fitness(True)]
+        # ------------------------------------------------------------
         print(f'Population size for selection = {len(self.population)}')
         self.population = self.selection(self.population)
+        # ------------------------------------------------------------
         print(f'Population size for cross_breed = {len(self.population)}')
         self.population = self.cross_breed(self.population)
-        print(f'Population size for mutate_population = {len(self.population)}')
-        self.mutate_population(self.population[int(self.selection_size / 2):])
+        # ------------------------------------------------------------
+        print(f'Population size for mutate_population = {len(self.population[1:])}')
+        self.mutate_population(self.population[1:])
+        # ------------------------------------------------------------
+        print(f'{color.OKBLUE}Population fitness after new generation{color.ENDC}')
         self.population = [x[0] for x in self.get_ordered_population_by_fitness(True)]
         print(f'Population size after cycle = {len(self.population)}')
 
@@ -138,12 +162,12 @@ class AlgoGen:
         if car_in_zone is None or car_in_zone < car.max_zone_entered:
             print(f"U-turns are BAD. You were in zone {car.max_zone_entered} but returned to {car_in_zone}")
             car.active = False
-            car.fitness_value = -1
+            car.fitness_value = -1.
             car.max_zone_entered = car_in_zone
-            return -1
+            return -1.
         car.max_zone_entered = car_in_zone
         # return car_in_zone #* 400 + (car.position[0] * 1.3) + car.position[1]
-        car.fitness_value = car_in_zone * (float(car.move_done) / float(car.default_max_move_allowed))
+        car.fitness_value = float(car_in_zone * (float(car.move_done) / float(car.default_max_move_allowed)))
         return car.fitness_value #* 400 + (car.position[0] * 1.3) + car.position[1]
 
     def count_active_car(self):
