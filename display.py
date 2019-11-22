@@ -110,6 +110,7 @@ class Display:
                         tmp = self.count_active_car
                     self.algo_gen.move_population()
                 else:
+                    self.save_surface_to_image()
                     self.gen += 1
                     print('no moving car anymore...')
                     self.algo_gen.do_one_cycle()
@@ -261,10 +262,12 @@ class Display:
         for i in range(5):
             best_car = self.algo_gen.population[i]
             datastore[i] = {"theta_1": best_car.theta_1.tolist(), "theta_2": best_car.theta_2.tolist(), "theta_3": best_car.theta_3.tolist()}
-        filename = "values.json"
+        filename = "values.json.bak"
         with open(filename, 'w') as f:
             json.dump(datastore, f)
 
+    def save_surface_to_image(self):
+        pygame.image.save(self.screen, 'generation_' + str(self.gen) + '.png')
 
 if __name__ == '__main__':
     import sys
