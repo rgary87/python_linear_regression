@@ -72,31 +72,13 @@ class AlgoGen:
             select.append(child)
         return select
 
-    # def old_selection(self, population: [Car]):
-    #     select = [population[0]]
-    #     last_fitness_val = -1
-    #     selected = 0
-    #     for p in population:
-    #
-    #         if selected >= self.selection_size -1:
-    #             break
-    #         if p.fitness_value != last_fitness_val:
-    #             last_fitness_val = p.fitness_value
-    #             select.append(p)
-    #             selected += 1
-    #     # select = population[:self.selection_size]
-    #     luckies = []
-    #     for i in range(self.lucky_few_size):
-    #         luckies.append(random.choice(population))
-    #     select.extend(luckies)
-    #     return select
-
     def breed_child(self, p1: Car, p2: Car):
         child = Car(p1.start_point, p1.track, None)
         for ts in range(len(child.all_thetas)):
             for ti in range(len(child.all_thetas[ts])):
                 for tj in range(len(child.all_thetas[ts][ti])):
                     child.all_thetas[ts][ti][tj] = p1.all_thetas[ts][ti][tj] if random.random() * 100 < 50 else p2.all_thetas[ts][ti][tj]
+                    child.fitness_value = -1
         return child
 
     def cross_breed(self, population: [Car]):
@@ -110,6 +92,7 @@ class AlgoGen:
     def mutate(self, car: Car):
         mut = 0
         no_mut = 0
+        car.fitness_value = -1.
         for ts in range(len(car.all_thetas)):
             for ti in range(len(car.all_thetas[ts])):
                 for tj in range(len(car.all_thetas[ts][ti])):
@@ -130,8 +113,9 @@ class AlgoGen:
     @staticmethod
     def move_car(car):
         if car.active:
-            best_move = nn.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3) + 1
-            car.order(best_move)
+            # best_move = nn.neural_network(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3) + 1
+            # car.order(best_move)
+            car.order_per_values(nn.neural_network_return_all_values(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3))
 
     def move_population(self):
         [self.move_car(car) for car in self.population]
@@ -145,8 +129,8 @@ class AlgoGen:
         print(f'Population size for selection = {len(self.population)}')
         self.population = self.selection(self.population)
         # ------------------------------------------------------------
-        print(f'Population size for cross_breed = {len(self.population)}')
-        self.population = self.cross_breed(self.population)
+        # print(f'Population size for cross_breed = {len(self.population)}')
+        # self.population = self.cross_breed(self.population)
         # ------------------------------------------------------------
         print(f'Population size for mutate_population = {len(self.population[1:])}')
         self.mutate_population(self.population[1:])
@@ -167,8 +151,9 @@ class AlgoGen:
             return -1.
         car.max_zone_entered = car_in_zone
         # return car_in_zone #* 400 + (car.position[0] * 1.3) + car.position[1]
-        car.fitness_value = float(car_in_zone * (float(car.move_done) / float(car.default_max_move_allowed)))
-        return car.fitness_value #* 400 + (car.position[0] * 1.3) + car.position[1]
+        car.fitness_value = max(0., (float(car_in_zone) * 100.) - (float(car.move_done) / 10.) + 450.)
+        # car.fitness_value = float(car_in_zone * (float(car.move_done) / float(car.default_max_move_allowed)))
+        return car.fitness_value
 
     def count_active_car(self):
         cnt = 0

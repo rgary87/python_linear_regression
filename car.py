@@ -110,6 +110,32 @@ class Car:
             self.turn_right()
             self.move_slow_forward()
 
+    def order_per_values(self, direction: []):
+        if not self.active:
+            return
+        self.move_done += 1
+        if self.move_done == self.default_max_move_allowed:
+            print("Too many moves done !")
+            self.active = False
+            return
+
+        # TURN RIGHT
+        self.rotation += (self.rotation_rate * 2) * max(0, direction[CarOrder.TURN_RIGHT.value - 1])
+
+        # TURN LEFT
+        self.rotation -= (self.rotation_rate * 2) * max(0, direction[CarOrder.TURN_LEFT.value - 1])
+
+        # MOVE FORWARD
+        points = Car.rotate_2d(
+            sp.array([
+                [self.position[0], self.position[1]],
+                [self.position[0], self.position[1] + (self.move_step * max(0, direction[CarOrder.FORWARD.value - 1]))]
+            ]),
+            sp.array([self.position[0], self.position[1]]),
+            self.rotation
+        )
+        self.position = [points[1][0], points[1][1]]
+
     def move_forward(self):
         points = Car.rotate_2d(
             sp.array([
@@ -181,7 +207,7 @@ class Car:
                 self.active = False
                 # REMOVE FRONT SENSOR
                 # print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} | {self.sensor_distances[4]} ")
-                print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} ")
+                # print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} ")
                 break
         # print(f'Distances: {self.sensor_distances}')
 

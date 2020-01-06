@@ -110,6 +110,7 @@ class Display:
                         tmp = self.count_active_car
                     self.algo_gen.move_population()
                 else:
+
                     self.save_surface_to_image()
                     self.gen += 1
                     print('no moving car anymore...')
@@ -117,6 +118,8 @@ class Display:
                     for p in self.algo_gen.population:
                         p.reset_values()
                     tmp = self.algo_gen.count_active_car()
+                    pygame.time.delay(5000)
+
             for event in pygame.event.get():
                 # print('if for event')
                 if event.type == pygame.QUIT:
@@ -130,15 +133,6 @@ class Display:
                         self.algo_gen.do_one_cycle()
                         for p in self.algo_gen.population:
                             p.reset_values()
-                    # if event.key == pygame.K_UP:
-                    #     self.cars[0].move_forward()
-                    #     self.cars[0].get_sensors_value()
-                    #     intersect_lines = self.track.copy()
-                    #     intersect_lines.extend(self.cars[0].sensors)
-                    # if event.key == pygame.K_LEFT:
-                    #     self.cars[0].turn_left()
-                    # if event.key == pygame.K_RIGHT:
-                    #     self.cars[0].turn_right()
                     if event.key == pygame.K_EQUALS:
                         print(f'self.algo_gen.mutation_rate: {self.algo_gen.mutation_rate}')
                         self.algo_gen.mutation_rate += 10
@@ -174,6 +168,7 @@ class Display:
             pygame.draw.aaline(self.screen, self.fgcolor, line[0], line[1])
         for car in cars:
             self.draw_car(car)
+            self.draw_car_fitness_value(car)
         self.draw_text_info()
         self.draw_zones_limits()
         self.draw_zones_number()
@@ -255,6 +250,11 @@ class Display:
                 else:
                     textsurface = self.myfont.render(f'{self.algo_gen.population[0].theta_1[j][i]:1.3f}', True, self.redcolor)
                 self.screen.blit(textsurface, (pos_x_start + int(cell_width / 2) - 5, pos_y_start + int(cell_height / 2)))
+
+    def draw_car_fitness_value(self, car):
+        if not car.active:
+            textsurface = self.myfont.render(f'{car.fitness_value:1.3f}', True, self.fgcolor)
+            self.screen.blit(textsurface, (car.position[0], car.position[1]))
 
     def save_best_car(self):
         self.algo_gen.get_ordered_population_by_fitness(False)
