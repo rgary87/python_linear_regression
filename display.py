@@ -1,6 +1,9 @@
 import os
 import time
 
+# import pydevd_pycharm
+# pydevd_pycharm.settrace('localhost', port=5000, stdoutToServer=True, stderrToServer=True)
+
 import pygame
 # import track as track
 import track2 as track

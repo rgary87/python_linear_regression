@@ -22,6 +22,8 @@ class AlgoGen:
                  mutation_rate, to_regenerate, polygon_zones) -> None:
         super().__init__()
         self.population = population
+        for p in population:
+            p.algo_gen = self
         self.population_size = population_size
         self.selection_size = selection_size
         self.lucky_few_size = lucky_few_size
@@ -74,6 +76,7 @@ class AlgoGen:
 
     def breed_child(self, p1: Car, p2: Car):
         child = Car(p1.start_point, p1.track, None)
+        child.algo_gen = p1.algo_gen
         for ts in range(len(child.all_thetas)):
             for ti in range(len(child.all_thetas[ts])):
                 for tj in range(len(child.all_thetas[ts][ti])):
@@ -119,7 +122,7 @@ class AlgoGen:
 
     def move_population(self):
         [self.move_car(car) for car in self.population]
-        self.population = [x[0] for x in self.get_ordered_population_by_fitness(False)]
+        # self.population = [x[0] for x in self.get_ordered_population_by_fitness(False)]
 
     def do_one_cycle(self):
         # print('Cycle')
@@ -140,8 +143,8 @@ class AlgoGen:
         print(f'Population size after cycle = {len(self.population)}')
 
     def calc_fitness(self, car: Car):
-        if not car.active:
-            return car.fitness_value
+        # if not car.active:
+        #     return car.fitness_value
         car_in_zone = get_point_in_zone_x(self.polygons, car.position)
         if car_in_zone is None or car_in_zone < car.max_zone_entered:
             print(f"U-turns are BAD. You were in zone {car.max_zone_entered} but returned to {car_in_zone}")

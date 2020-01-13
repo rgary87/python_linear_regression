@@ -38,6 +38,7 @@ class Car:
         clone.fitness_value = float(self.fitness_value)
         clone.position = self.position
         clone.max_zone_entered = self.max_zone_entered
+        clone.algo_gen = self.algo_gen
         return clone
 
     def __init__(self, start_point, track, saved_values) -> None:
@@ -77,7 +78,7 @@ class Car:
         self.outer_sensor_rotation = sp.pi / 6
 
         self.fitness_value = 0.
-
+        self.algo_gen = None
 
     def reset_values(self):
         self.position = [self.start_point[0], self.start_point[1]]
@@ -93,6 +94,7 @@ class Car:
         if self.move_done == self.default_max_move_allowed:
             print("Too many moves done !")
             self.active = False
+            self.fitness_value = self.algo_gen.calc_fitness(self)
             return
         # print('MOVE !',end='')
         if direction == CarOrder.TURN_LEFT.value:
@@ -117,6 +119,7 @@ class Car:
         if self.move_done == self.default_max_move_allowed:
             print("Too many moves done !")
             self.active = False
+            self.fitness_value = self.algo_gen.calc_fitness(self)
             return
 
         # TURN RIGHT
@@ -205,6 +208,7 @@ class Car:
                 print(f'WEIRD DISTANCE ! s: {s}')
             if s < 30:
                 self.active = False
+                self.fitness_value = self.algo_gen.calc_fitness(self)
                 # REMOVE FRONT SENSOR
                 # print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} | {self.sensor_distances[4]} ")
                 # print(f"Last sensors values: {self.sensor_distances[0]} | {self.sensor_distances[1]} | {self.sensor_distances[2]} | {self.sensor_distances[3]} ")
