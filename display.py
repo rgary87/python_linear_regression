@@ -2,8 +2,8 @@ import os
 import time
 
 import pygame
-# import track as track
-import track2 as track
+import track as track
+# import track2 as track
 import trigonometrie
 from algo_gen import AlgoGen
 from car import *

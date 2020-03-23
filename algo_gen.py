@@ -1,3 +1,4 @@
+import asyncio
 import random
 import operator
 from multiprocessing.pool import Pool
@@ -118,6 +119,7 @@ class AlgoGen:
             car.order_per_values(nn.neural_network_return_all_values(car.get_sensors_value(), car.theta_1, car.theta_2, car.theta_3))
 
     def move_population(self):
+        # await asyncio.gather(*(self.move_car(car) for car in self.population))
         [self.move_car(car) for car in self.population]
         self.population = [x[0] for x in self.get_ordered_population_by_fitness(False)]
 
