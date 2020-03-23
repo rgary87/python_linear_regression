@@ -8,6 +8,7 @@ def segment_intersect(line1, line2):
     s2_x = line2[1][0] - line2[0][0]
     s2_y = line2[1][1] - line2[0][1]
 
+
     s = (-s1_y * (line1[0][0] - line2[0][0]) + s1_x * (line1[0][1] - line2[0][1])) / (-s2_x * s1_y + s1_x * s2_y)
     t = (s2_x * (line1[0][1] - line2[0][1]) - s2_y * (line1[0][0] - line2[0][0])) / (-s2_x * s1_y + s1_x * s2_y)
 
